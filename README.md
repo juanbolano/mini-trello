@@ -20,6 +20,12 @@
 
 ```python app.py```
 
+### Unit tests:
+
+```pip install pytest```
+
+```pytest```
+
 ## Frontend
 
 ### In a terminal run:

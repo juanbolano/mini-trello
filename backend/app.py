@@ -98,15 +98,8 @@ class AddBoardMutation(Mutation):
     board = Field(BoardType)
 
     def mutate(self, info, title):
-        id = str(uuid.uuid4())
-        # Implement logic to add a board in DynamoDB
-        board_table.put_item(
-            Item={
-                'id': id,
-                'title': title
-            }
-        )
-        return AddBoardMutation(board=BoardType(id=id, title=title))
+        board = add_board(title)
+        return AddBoardMutation(board=board)
 
 class AddColumnMutation(Mutation):
     class Arguments:
@@ -117,16 +110,8 @@ class AddColumnMutation(Mutation):
     column = Field(ColumnType)
 
     def mutate(self, info, title, board, order):
-        id = str(uuid.uuid4())
-        column_table.put_item(
-            Item={
-                'id': id,
-                'title': title,
-                'board': board,
-                'order': order,
-            }
-        )
-        return AddColumnMutation(column=ColumnType(id=id, title=title, board=board, order=order))
+        column = add_column(title, board, order)
+        return AddColumnMutation(column=column)
 
 class AddCardMutation(Mutation):
     class Arguments:
@@ -137,18 +122,8 @@ class AddCardMutation(Mutation):
     card = Field(CardType)
 
     def mutate(self, info, title, content, column):
-        id = str(uuid.uuid4())
-        created = str(datetime.datetime.now())
-        card_table.put_item(
-            Item={
-                'id': id,
-                'title': title,
-                'content': content,
-                'column': column,
-                'created': created,
-            }
-        )
-        return AddCardMutation(card=CardType(id=id, title=title, content=content, column=column, created=created))
+        card = add_card(title, content, column)
+        return AddCardMutation(card=card)
 
 class UpdateCardMutation(Mutation):
     class Arguments:
@@ -184,6 +159,47 @@ class Mutation(ObjectType):
 # Graphene and Flask configuration
 schema = Schema(query=Query, mutation=Mutation)
 app.add_url_rule('/', view_func=GraphQLView.as_view('graphql', schema=schema, graphiql=True))
+
+
+def add_board(title):
+    id = str(uuid.uuid4())
+    # Implement logic to add a board in DynamoDB
+    board_table.put_item(
+        Item={
+            'id': id,
+            'title': title
+        }
+    )
+    return BoardType(id=id, title=title)
+
+
+def add_column(title, board, order):
+    id = str(uuid.uuid4())
+    column_table.put_item(
+        Item={
+            'id': id,
+            'title': title,
+            'board': board,
+            'order': order,
+        }
+    )
+    return ColumnType(id=id, title=title, board=board, order=order)
+
+
+def add_card(title, content, column):
+    id = str(uuid.uuid4())
+    created = str(datetime.datetime.now())
+    card_table.put_item(
+        Item={
+            'id': id,
+            'title': title,
+            'content': content,
+            'column': column,
+            'created': created,
+        }
+    )
+    return CardType(id=id, title=title, content=content, column=column, created=created)
+
 
 def update_card_in_dynamodb(id, column):
     # Get existing card from DynamoDB
