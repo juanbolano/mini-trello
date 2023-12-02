@@ -39,6 +39,20 @@ const DeleteButton = styled.button`
   }
 `;
 
+const EditButton = styled.button`
+margin-top: 10px;
+background-color: #ff4f4f;
+color: #fff;
+border: none;
+padding: 8px 16px;
+cursor: pointer;
+border-radius: 4px;
+
+&:hover {
+  background-color: #d63434;
+}
+`;
+
 const modalStyles = {
   content: {
     width: "300px",
@@ -74,10 +88,29 @@ export default function Card({ card, index }) {
       }
     `
   );
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editCardMutation, { loading: loadingEditMutation }] = useMutation(
+    gql`
+      mutation EditCard($id: ID!, $title: String!, $content: String!) {
+        editCard(id: $id, title: $title, content: $content) {
+          card {
+            id
+            title
+            content
+            column
+            created
+          }
+        }
+      }
+    `
+  );
+
+  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [newCardTitle, setNewCardTitle] = useState(card.title);
+  const [newCardContent, setNewCardContent] = useState(card.content);
 
   function handleRemoveCard(id) {
-    setIsModalOpen(true);
+    setIsRemoveModalOpen(true);
   }
 
   function handleConfirmRemove() {
@@ -85,11 +118,26 @@ export default function Card({ card, index }) {
       variables: { id: card.id },
     });
 
-    setIsModalOpen(false);
+    setIsRemoveModalOpen(false);
   }
 
   function handleCancelRemove() {
-    setIsModalOpen(false);
+    setIsRemoveModalOpen(false);
+  }
+
+  function openEditModal() {
+    setIsEditModalOpen(true);
+  }
+
+  function closeEditModal() {
+    setIsEditModalOpen(false);
+  }
+
+  function handleEditCard(title, content) {
+    editCardMutation({
+      variables: { id: card.id, title, content },
+    });
+    closeEditModal();
   }
   
   return (
@@ -120,10 +168,16 @@ export default function Card({ card, index }) {
             >
               Remove
             </button>
+            <button
+              className="btn btn-edit"
+              onClick={() => openEditModal()}
+            >
+              Edit
+            </button>
           </Container>
           <Modal
-            isOpen={isModalOpen}
-            onRequestClose={() => setIsModalOpen(false)}
+            isOpen={isRemoveModalOpen}
+            onRequestClose={() => setIsRemoveModalOpen(false)}
             style={modalStyles}
           >
             <p>Are you sure you want to remove this card?</p>
@@ -132,6 +186,60 @@ export default function Card({ card, index }) {
               <DeleteButton onClick={handleCancelRemove}>Cancel</DeleteButton>
             </div>
           </Modal>
+          <Modal
+          isOpen={isEditModalOpen}
+          onRequestClose={closeEditModal}
+          style={modalStyles}
+        >
+          <h4 style={{marginBottom: "16px" }}>Edit card</h4>
+          <label style={{ marginBottom: "8px" }}>
+            Title:
+            <input
+              type="text"
+              value={newCardTitle}
+              onChange={(e) => setNewCardTitle(e.target.value)}
+              style={{ width: "100%", padding: "8px", boxSizing: "border-box", marginBottom: "8px" }}
+            />
+          </label>
+          <label style={{ marginBottom: "16px" }}>
+            Content:
+            <input
+              type="text"
+              value={newCardContent}
+              onChange={(e) => setNewCardContent(e.target.value)}
+              style={{ width: "100%", padding: "8px", boxSizing: "border-box", marginBottom: "8px" }}
+            />
+          </label>
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <button
+              onClick={() => handleEditCard(newCardTitle, newCardContent)}
+              style={{
+                backgroundColor: "#56ccf2",
+                color: "#fff",
+                border: "none",
+                padding: "8px 16px",
+                cursor: "pointer",
+                borderRadius: "4px",
+                marginRight: "8px",
+              }}
+            >
+              Confirm
+            </button>
+            <button
+              onClick={closeEditModal}
+              style={{
+                backgroundColor: "#ccc",
+                color: "#fff",
+                border: "none",
+                padding: "8px 16px",
+                cursor: "pointer",
+                borderRadius: "4px",
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </Modal>
         </>
       )}
     </Draggable>

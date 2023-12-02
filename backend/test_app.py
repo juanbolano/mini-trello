@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock, MagicMock
 from boto3.dynamodb.conditions import Key
-from app import add_board, add_column, add_card, update_card_in_dynamodb
+from app import add_board, add_column, add_card, update_card_status_in_dynamodb, edit_card_in_dynamodb
 
 @pytest.fixture()
 def mock_board_table(mocker) -> Mock:
@@ -68,16 +68,30 @@ def test_add_card(mock_card_table: Mock):
         'created': result.created
     })
 
-def test_update_card_in_dynamodb(mock_card_table: Mock):
+def test_update_card_status_in_dynamodb(mock_card_table: Mock):
     mock_card_table.query = MagicMock()
 
     # Mocking the response from DynamoDB
     response_mock = {'Items': [{'id': '123', 'column': 'old_column', 'title': 'test card', 'content': 'test content', 'created': 'test date'}]}
     mock_card_table.query.return_value = response_mock
 
-    result = update_card_in_dynamodb("123", "new_column")
+    result = update_card_status_in_dynamodb("123", "new_column")
 
     assert result['column'] == "new_column"
+
+    mock_card_table.put_item.assert_called_once_with(Item=result)
+    mock_card_table.query.assert_called_once_with(KeyConditionExpression=Key('id').eq('123'))
+
+def test_edit_card_in_dynamodb(mock_card_table: Mock):
+    mock_card_table.query = MagicMock()
+
+    response_mock = {'Items': [{'id': '123', 'column': 'old_column', 'title': 'test card', 'content': 'test content', 'created': 'test date'}]}
+    mock_card_table.query.return_value = response_mock
+
+    result = edit_card_in_dynamodb("123", "new title", "new content")
+
+    assert result['title'] == "new title"
+    assert result['content'] == "new content"
 
     mock_card_table.put_item.assert_called_once_with(Item=result)
     mock_card_table.query.assert_called_once_with(KeyConditionExpression=Key('id').eq('123'))

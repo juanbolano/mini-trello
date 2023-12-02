@@ -54,10 +54,10 @@ export default function Board({ title, id }) {
   `;
   const [getColumns, { loading, error, data }] = useLazyQuery(GET_COLUMNS);
 
-  const [updateCardMutation, { loading: loadingMutation }] = useMutation(
+  const [updateCardStatusMutation, { loading: loadingMutation }] = useMutation(
     gql`
-      mutation UpdateCard($id: ID!, $column: String!) {
-        updateCard(id: $id, column: $column) {
+      mutation UpdateCardStatus($id: ID!, $column: String!) {
+        updateCardStatus(id: $id, column: $column) {
           card {
             id
             title
@@ -90,7 +90,7 @@ export default function Board({ title, id }) {
       setColumns(data?.columns || []);
     });
     if (isModified) {
-      updateCardMutation({
+      updateCardStatusMutation({
         variables: { id: draggableId, column: droppableId },
       })
         .then((response) => {
@@ -102,7 +102,7 @@ export default function Board({ title, id }) {
           console.error("Mutation error:", error);
         });
     }
-  }, [isModified, draggableId, droppableId, updateCardMutation, columns, getColumns, data?.columns]);
+  }, [isModified, draggableId, droppableId, updateCardStatusMutation, columns, getColumns, data?.columns]);
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error : {error.message}</p>;

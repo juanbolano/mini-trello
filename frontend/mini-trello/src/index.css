@@ -28,6 +28,22 @@ code {
     background-color: #d63434;
   }
 }
+.btn-edit {
+  margin-top: 10px;
+  background-color: #5daa33;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 4px;
+  position: absolute;
+  bottom: 10px;
+  right: 120px;
+
+  &:hover {
+    background-color: #5daa33;
+  }
+}
 
 .btn-add {
   font-size: 16px;

@@ -125,7 +125,7 @@ class AddCardMutation(Mutation):
         card = add_card(title, content, column)
         return AddCardMutation(card=card)
 
-class UpdateCardMutation(Mutation):
+class UpdateCardStatusMutation(Mutation):
     class Arguments:
         id = graphene.ID(required=True)
         column = graphene.String(required=True)
@@ -133,11 +133,23 @@ class UpdateCardMutation(Mutation):
     card = Field(CardType)
 
     def mutate(self, info, id, column=None):
-        # Update card in DynamoDB
-        card = update_card_in_dynamodb(id, column)
+        # Update card status in DynamoDB
+        card = update_card_status_in_dynamodb(id, column)
 
         # Return instance of the updated card
-        return UpdateCardMutation(card=card)
+        return UpdateCardStatusMutation(card=card)
+
+class EditCardMutation(Mutation):
+    class Arguments:
+        id = graphene.ID(required=True)
+        title = graphene.String(required=True)
+        content = graphene.String(required=True)
+
+    card = Field(CardType)
+
+    def mutate(self, info, id, title=None, content=None):
+        card = edit_card_in_dynamodb(id, title, content)
+        return EditCardMutation(card=card)
 
 class RemoveCardMutation(Mutation):
     ok = graphene.Boolean()
@@ -153,7 +165,8 @@ class Mutation(ObjectType):
     addBoard = AddBoardMutation.Field()
     addColumn = AddColumnMutation.Field()
     addCard = AddCardMutation.Field()
-    updateCard = UpdateCardMutation.Field()
+    updateCardStatus = UpdateCardStatusMutation.Field()
+    editCard = EditCardMutation.Field()
     removeCard = RemoveCardMutation.Field()
 
 # Graphene and Flask configuration
@@ -201,7 +214,7 @@ def add_card(title, content, column):
     return CardType(id=id, title=title, content=content, column=column, created=created)
 
 
-def update_card_in_dynamodb(id, column):
+def update_card_status_in_dynamodb(id, column):
     # Get existing card from DynamoDB
     response = card_table.query(
         KeyConditionExpression=Key('id').eq(id)
@@ -214,6 +227,23 @@ def update_card_in_dynamodb(id, column):
     # Update fields according to the given values
     updated_card = card_data[0]
     updated_card['column'] = column
+
+    card_table.put_item(Item=updated_card)
+
+    return updated_card
+
+def edit_card_in_dynamodb(id, title, content):
+    response = card_table.query(
+        KeyConditionExpression=Key('id').eq(id)
+    )
+    card_data = response.get('Items', [])
+
+    if not card_data:
+        raise ValueError(f"No se encontró ninguna card con ID: {id}")
+
+    updated_card = card_data[0]
+    updated_card['title'] = title
+    updated_card['content'] = content
 
     card_table.put_item(Item=updated_card)
 
