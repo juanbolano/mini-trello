@@ -1,3 +1,6 @@
+# Prerequisites
+* aws-cli
+
 # How to run it
 
 ## DynamoDB
@@ -8,9 +11,13 @@
 
 ```docker run -p 8000:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory -sharedDb```
 
+### Open a new terminal, go to the backend folder and then run:
+
+```./init_dynamodb.sh```
+
 ## Backend (Python 3.10)
 
-### In a terminal run:
+### In a terminal go to the backend folder and run:
 
 ```python -m venv venv```
 
@@ -28,7 +35,7 @@
 
 ## Frontend
 
-### In a terminal run:
+### In a terminal go to the frontend/mini-trello folder and run:
 
 ```npm install```
 
